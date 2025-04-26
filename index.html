@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Penyimpanan Data + Gambar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #ffe4ec;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #d6336c;
+    }
+    .form-group {
+      max-width: 500px;
+      margin: 20px auto;
+      background: #fff0f5;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      margin-bottom: 20px;
+      border: 1px solid #d6336c;
+      border-radius: 10px;
+      background-color: #fff;
+      font-size: 16px;
+    }
+    button {
+      background-color: #d6336c;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+      margin-right: 5px;
+    }
+    button:hover {
+      background-color: #ad1457;
+    }
+    .data-list {
+      max-width: 500px;
+      margin: 20px auto;
+    }
+    .data-card {
+      background: #ffe0f0;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+      position: relative;
+      transition: background-color 0.5s ease;
+    }
+    .data-card.edited {
+      background-color: #ffd6e0;
+    }
+    .data-card p {
+      margin: 5px 0;
+    }
+    .data-card img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+    .delete-btn, .edit-btn {
+      margin-top: 10px;
+    }
+    .delete-btn {
+      background-color: #ff6b81;
+    }
+    .delete-btn:hover {
+      background-color: #ff4757;
+    }
+    .edit-btn {
+      background-color: #ffa502;
+    }
+    .edit-btn:hover {
+      background-color: #e17000;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🗂️ Penyimpanan Data</h1>
+
+  <div class="form-group">
+    <input type="text" id="nama" placeholder="Nama Barang">
+    <input type="number" id="jumlah" placeholder="Jumlah">
+    <textarea id="keterangan" rows="3" placeholder="Keterangan"></textarea>
+    <input type="text" id="gambar" placeholder="URL Gambar (Opsional)">
+    <button id="simpanBtn" onclick="simpanData()">💾 Simpan Data</button>
+  </div>
+
+  <div class="data-list" id="dataList"></div>
+
+  <script>
+    let editIndex = -1; // -1 artinya tidak sedang edit
+
+    function simpanData() {
+      const nama = document.getElementById('nama').value.trim();
+      const jumlah = document.getElementById('jumlah').value.trim();
+      const keterangan = document.getElementById('keterangan').value.trim();
+      const gambar = document.getElementById('gambar').value.trim();
+
+      if (!nama || !jumlah || !keterangan) {
+        alert('Semua field (kecuali gambar) harus diisi!');
+        return;
+      }
+
+      let data = JSON.parse(localStorage.getItem('dataBarang')) || [];
+
+      if (editIndex === -1) {
+        // Tambah data baru
+        data.push({ nama, jumlah, keterangan, gambar });
+      } else {
+        // Update data yang di-edit
+        data[editIndex] = { nama, jumlah, keterangan, gambar };
+        editIndex = -1;
+        document.getElementById('simpanBtn').textContent = '💾 Simpan Data';
+      }
+
+      localStorage.setItem('dataBarang', JSON.stringify(data));
+
+      document.getElementById('nama').value = '';
+      document.getElementById('jumlah').value = '';
+      document.getElementById('keterangan').value = '';
+      document.getElementById('gambar').value = '';
+
+      tampilkanData();
+    }
+
+    function tampilkanData() {
+      const data = JSON.parse(localStorage.getItem('dataBarang')) || [];
+      const dataList = document.getElementById('dataList');
+      dataList.innerHTML = '';
+
+      data.forEach((item, index) => {
+        dataList.innerHTML += `
+          <div class="data-card" id="card-${index}">
+            <p><strong>Nama:</strong> ${item.nama}</p>
+            <p><strong>Jumlah:</strong> ${item.jumlah}</p>
+            <p><strong>Keterangan:</strong> ${item.keterangan}</p>
+            ${item.gambar ? `<img src="${item.gambar}" alt="Gambar">` : ''}
+            <button class="edit-btn" onclick="editData(${index})">✏️ Edit</button>
+            <button class="delete-btn" onclick="hapusData(${index})">🗑️ Hapus</button>
+          </div>
+        `;
+      });
+    }
+
+    function hapusData(index) {
+      let data = JSON.parse(localStorage.getItem('dataBarang')) || [];
+      data.splice(index, 1);
+      localStorage.setItem('dataBarang', JSON.stringify(data));
+      tampilkanData();
+    }
+
+    function editData(index) {
+      const data = JSON.parse(localStorage.getItem('dataBarang')) || [];
+      const item = data[index];
+
+      document.getElementById('nama').value = item.nama;
+      document.getElementById('jumlah').value = item.jumlah;
+      document.getElementById('keterangan').value = item.keterangan;
+      document.getElementById('gambar').value = item.gambar;
+
+      editIndex = index;
+      document.getElementById('simpanBtn').textContent = '✅ Update Data';
+
+      // Animasi glowing edit
+      const card = document.getElementById(`card-${index}`);
+      card.classList.add('edited');
+      setTimeout(() => {
+        card.classList.remove('edited');
+      }, 1000);
+    }
+
+    window.onload = tampilkanData;
+  </script>
+
+</body>
+</html>
